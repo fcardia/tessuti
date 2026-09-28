@@ -267,7 +267,8 @@ function render(){
   $('btnOk').disabled = !!a; $('btnSkip').disabled = !!a;
   if(a) showFeedback(it, a); else $('fb').className = 'fb';
   $('btnPrev').disabled = idx===0;
-  if(!a) setTimeout(()=>$('ans').focus(), 0);
+  /* su tablet/telefono non do il focus da solo: farebbe saltare su la tastiera a ogni carta */
+  if(!a && !matchMedia('(hover: none)').matches) setTimeout(()=>$('ans').focus(), 0);
   updateScore();
 }
 function esc(s){ return (s||'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
