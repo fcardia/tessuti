@@ -1,0 +1,404 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Riconoscimento tessuti — Laboratorio di Istologia</title>
+<style>
+  :root{
+    --bg:#f6f5f2; --card:#fff; --ink:#1d1c1a; --muted:#6c6862; --line:#dedad3;
+    --accent:#7a2f45; --ok:#1f7a4d; --okbg:#e6f4ec; --ko:#b02a2a; --kobg:#fbeaea;
+    --warn:#8a6100; --warnbg:#fdf3dd;
+    color-scheme: light;
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --bg:#17161a; --card:#211f24; --ink:#eceaf0; --muted:#a29daa; --line:#38343d;
+      --accent:#e8a0b4; --ok:#6fd39c; --okbg:#173326; --ko:#ff9a9a; --kobg:#391d1d;
+      --warn:#f0c65e; --warnbg:#3a2e12;
+      color-scheme: dark;
+    }
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);
+       font:16px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+       padding:0 16px 48px}
+  .wrap{max-width:900px;margin:0 auto}
+  header{padding:18px 0 12px;border-bottom:1px solid var(--line);margin-bottom:18px}
+  h1{font-size:1.15rem;margin:0 0 4px;letter-spacing:-.01em}
+  .sub{color:var(--muted);font-size:.85rem}
+  .bar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:12px}
+  .stat{font-variant-numeric:tabular-nums;font-size:.85rem;color:var(--muted);
+        background:var(--card);border:1px solid var(--line);border-radius:999px;padding:4px 11px}
+  .stat b{color:var(--ink)}
+  button{font:inherit;cursor:pointer;border-radius:9px;border:1px solid var(--line);
+         background:var(--card);color:var(--ink);padding:9px 14px;transition:.12s}
+  button:hover{border-color:var(--muted)}
+  button.primary{background:var(--accent);border-color:var(--accent);color:#fff;font-weight:600}
+  button.primary:hover{filter:brightness(1.08)}
+  button:disabled{opacity:.45;cursor:default}
+  .small{font-size:.82rem;padding:6px 10px}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:14px;
+        padding:16px;margin-bottom:14px}
+  .imgbox{display:flex;justify-content:center;align-items:center;background:#0000000d;
+          border-radius:10px;padding:8px;min-height:180px}
+  @media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .imgbox{background:#ffffff0a}}
+  .imgbox img{max-width:100%;max-height:60vh;border-radius:6px;display:block;cursor:zoom-in}
+  .meta{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
+  .tag{font-size:.74rem;border:1px solid var(--line);border-radius:999px;padding:3px 9px;color:var(--muted)}
+  .tag.warn{background:var(--warnbg);color:var(--warn);border-color:transparent}
+  form.answer{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}
+  input[type=text]{flex:1 1 240px;min-width:0;font:inherit;padding:11px 13px;border-radius:9px;
+        border:1px solid var(--line);background:var(--bg);color:var(--ink)}
+  input[type=text]:focus{outline:2px solid var(--accent);outline-offset:1px}
+  .fb{border-radius:10px;padding:12px 14px;margin-top:14px;display:none}
+  .fb.show{display:block}
+  .fb.ok{background:var(--okbg);border:1px solid transparent}
+  .fb.ko{background:var(--kobg);border:1px solid transparent}
+  .fb.na{background:var(--warnbg);border:1px solid transparent}
+  .fb .head{font-weight:700;margin-bottom:4px}
+  .fb.ok .head{color:var(--ok)} .fb.ko .head{color:var(--ko)} .fb.na .head{color:var(--warn)}
+  .sol{font-size:1.05rem;font-weight:600}
+  .alts{font-size:.83rem;color:var(--muted);margin-top:4px}
+  details{margin-top:10px;font-size:.87rem}
+  summary{cursor:pointer;color:var(--muted)}
+  blockquote{margin:8px 0 0;padding:8px 12px;border-left:3px solid var(--line);
+             color:var(--muted);font-style:italic}
+  .nav{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:4px}
+  .spacer{flex:1}
+  fieldset{border:1px solid var(--line);border-radius:10px;padding:10px 12px;margin:0 0 12px}
+  legend{font-size:.8rem;color:var(--muted);padding:0 6px}
+  label.chk{display:inline-flex;align-items:center;gap:6px;font-size:.85rem;margin:3px 12px 3px 0}
+  .lightbox{position:fixed;inset:0;background:#000000e6;display:none;align-items:center;
+            justify-content:center;padding:16px;z-index:50;cursor:zoom-out}
+  .lightbox.show{display:flex}
+  .lightbox img{max-width:100%;max-height:100%;border-radius:6px}
+  .done{text-align:center;padding:30px 10px}
+  .done h2{margin:0 0 8px}
+  table.rev{width:100%;border-collapse:collapse;font-size:.85rem;margin-top:10px}
+  table.rev td{border-top:1px solid var(--line);padding:6px 4px;vertical-align:top}
+</style>
+</head>
+
+<div class="wrap">
+<header>
+  <h1>Riconoscimento dei tessuti — Laboratorio di Istologia</h1>
+  <div class="sub">Tutte le immagini e le soluzioni provengono dal PDF <i>Laboratorio.pdf</i>.</div>
+  <div class="bar">
+    <span class="stat">Carta <b id="pos">–</b> / <b id="tot">–</b></span>
+    <span class="stat">Giuste <b id="nok">0</b></span>
+    <span class="stat">Sbagliate <b id="nko">0</b></span>
+    <span class="stat">Punteggio <b id="perc">–</b></span>
+    <span class="spacer"></span>
+    <button class="small" id="btnOpts">Opzioni</button>
+    <button class="small" id="btnShuffle">Mescola</button>
+    <button class="small" id="btnWrong" disabled>Ripeti gli errori</button>
+    <button class="small" id="btnReset">Azzera</button>
+  </div>
+</header>
+
+<div class="card" id="opts" hidden>
+  <fieldset>
+    <legend>Che cosa includere</legend>
+    <label class="chk"><input type="checkbox" class="f" data-f="tessuto" checked> tessuti (91)</label>
+    <label class="chk"><input type="checkbox" class="f" data-f="struttura" checked> strutture / cellule (105)</label>
+    <label class="chk"><input type="checkbox" class="f" data-f="organo" checked> panoramiche d'organo (32)</label>
+    <label class="chk"><input type="checkbox" class="f" data-f="altro" checked> schema e non istologiche (2)</label>
+  </fieldset>
+  <fieldset>
+    <legend>Filtri</legend>
+    <label class="chk"><input type="checkbox" id="fUnsure" checked> includi le immagini senza soluzione certa (6)</label><br>
+    <label class="chk"><input type="checkbox" id="fLabel" checked> includi le immagini con l'etichetta già stampata sopra (32)</label>
+  </fieldset>
+  <div class="nav"><button class="primary" id="btnApply">Applica e ricomincia</button></div>
+</div>
+
+<div id="quiz">
+  <div class="card">
+    <div class="imgbox"><img id="img" alt="preparato istologico"></div>
+    <div class="meta" id="meta"></div>
+
+    <form class="answer" id="form" autocomplete="off">
+      <input type="text" id="ans" placeholder="Che tessuto / struttura è? Scrivi qui e premi Invio"
+             autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false"
+             enterkeyhint="done">
+      <button class="primary" type="submit" id="btnOk">Conferma</button>
+      <button type="button" id="btnSkip">Non lo so</button>
+    </form>
+
+    <div class="fb" id="fb">
+      <div class="head" id="fbHead"></div>
+      <div class="sol" id="fbSol"></div>
+      <div class="alts" id="fbAlts"></div>
+      <details id="fbDet">
+        <summary>Testo del PDF da cui viene la soluzione</summary>
+        <blockquote id="fbQuote"></blockquote>
+        <div class="alts" id="fbNote"></div>
+      </details>
+    </div>
+  </div>
+
+  <div class="nav">
+    <button id="btnPrev">← Indietro</button>
+    <button id="btnNext">Avanti →</button>
+    <span class="spacer"></span>
+    <span class="stat" id="idTag"></span>
+  </div>
+</div>
+
+<div id="end" class="card done" hidden>
+  <h2>Giro completato</h2>
+  <p id="endTxt"></p>
+  <div class="nav" style="justify-content:center">
+    <button class="primary" id="btnWrong2">Ripeti solo le sbagliate</button>
+    <button id="btnAgain">Ricomincia da capo</button>
+  </div>
+  <table class="rev" id="revTable"></table>
+</div>
+</div>
+
+<div class="lightbox" id="lb"><img id="lbImg" alt=""></div>
+
+<script src="data.js"></script>
+<script>
+/* ---------- normalizzazione e confronto tollerante ---------- */
+const STOP = new Set(['di','del','dello','della','dei','degli','delle','d','il','lo','la',
+  'i','gli','le','un','uno','una','e','ed','a','al','allo','alla','ai','agli','alle',
+  'in','nel','nella','nei','con','da','dal','per','su','sul','che','tipo']);
+
+function norm(s){
+  return (s||'').toLowerCase()
+    .normalize('NFD').replace(/[̀-ͯ]/g,'')   // accenti
+    .replace(/[^a-z0-9]+/g,' ')                        // punteggiatura
+    .trim().replace(/\s+/g,' ');
+}
+function tokens(s){ return norm(s).split(' ').filter(t=>t && !STOP.has(t)); }
+function stem(t){
+  let s = t.replace(/chi|che/g,'ci').replace(/ghi|ghe/g,'gi');
+  if(s.length>4 && /[aeio]$/.test(s)) s = s.slice(0,-1);
+  return s;
+}
+function keySet(s, useStem){
+  const t = tokens(s).map(x=>useStem?stem(x):x);
+  return t.sort().join(' ');
+}
+
+/* varianti accettate: soluzione + sinonimi dal PDF (+ forme equivalenti automatiche) */
+function accepted(it){
+  const base = [it.sol, ...(it.alts||[])].filter(Boolean);
+  const out = new Set();
+  for(const v of base){
+    out.add(v);
+    const noPar = v.replace(/\([^)]*\)/g,' ').trim();        // senza le parentesi
+    if(noPar) out.add(noPar);
+    const inPar = (v.match(/\(([^)]*)\)/)||[])[1];            // solo la parentesi
+    if(inPar && inPar.split(' ').length>1) out.add(inPar);
+    if(/^tessuto\s+/i.test(v)) out.add(v.replace(/^tessuto\s+/i,''));
+    else out.add('tessuto ' + v);
+  }
+  return [...out];
+}
+function isCorrect(input, it){
+  if(!norm(input)) return false;
+  const a = accepted(it);
+  const k1 = keySet(input,false), k2 = keySet(input,true);
+  for(const v of a){
+    if(keySet(v,false)===k1) return true;
+    if(keySet(v,true )===k2) return true;
+  }
+  return false;
+}
+
+/* ---------- stato ---------- */
+const $ = id => document.getElementById(id);
+let deck = [], idx = 0, answers = {}, filters = null;
+
+function catOf(it){
+  if(it.tipo === 'tessuto') return 'tessuto';
+  if(it.tipo === 'struttura') return 'struttura';
+  if(it.tipo.indexOf('organo') === 0) return 'organo';
+  return 'altro';
+}
+function hasLabel(it){ return /tichett/.test(it.note||''); }
+function isUnsure(it){ return it.cert !== 'certo' || !it.sol; }
+
+function readFilters(){
+  const cats = new Set();
+  document.querySelectorAll('.f').forEach(c=>{ if(c.checked) cats.add(c.dataset.f); });
+  return {cats, unsure:$('fUnsure').checked, label:$('fLabel').checked};
+}
+function build(){
+  filters = readFilters();
+  let list = DATI.filter(it => filters.cats.has(catOf(it)));
+  if(!filters.unsure) list = list.filter(it => !isUnsure(it));
+  if(!filters.label)  list = list.filter(it => !hasLabel(it));
+  deck = shuffle(list.slice());
+  idx = 0; answers = {};
+  render(); save();
+}
+function shuffle(a){
+  for(let i=a.length-1;i>0;i--){ const j=Math.random()*(i+1)|0; [a[i],a[j]]=[a[j],a[i]]; }
+  return a;
+}
+
+/* ---------- rendering ---------- */
+function render(){
+  $('end').hidden = true; $('quiz').hidden = false;
+  if(!deck.length){ $('quiz').hidden = true; $('end').hidden = false;
+    $('endTxt').textContent = 'Nessuna immagine con i filtri scelti.'; $('revTable').innerHTML=''; return; }
+  idx = Math.max(0, Math.min(idx, deck.length-1));
+  const it = deck[idx];
+  $('img').src = (window.IMGDATA && IMGDATA[it.file]) || ('img/' + it.file);
+  $('img').alt = 'Preparato: ' + it.prep + ' (pagina ' + it.page + ')';
+  $('pos').textContent = idx+1; $('tot').textContent = deck.length;
+  $('idTag').textContent = it.id + ' · pag. ' + it.page;
+
+  const tags = [];
+  if(isUnsure(it)) tags.push(['warn','soluzione da verificare']);
+  if(hasLabel(it)) tags.push(['warn','attenzione: etichetta stampata sull\'immagine']);
+  if(it.tipo.indexOf('organo')===0) tags.push(['','panoramica d\'organo']);
+  if(it.tipo==='schema') tags.push(['warn','disegno schematico']);
+  if(it.tipo==='non istologica') tags.push(['warn','non è un\'immagine istologica']);
+  $('meta').innerHTML = tags.map(t=>`<span class="tag ${t[0]}">${esc(t[1])}</span>`).join('');
+
+  const a = answers[it.id];
+  $('ans').value = a ? a.text : '';
+  $('ans').disabled = !!a;
+  $('btnOk').disabled = !!a; $('btnSkip').disabled = !!a;
+  if(a) showFeedback(it, a); else $('fb').className = 'fb';
+  $('btnPrev').disabled = idx===0;
+  if(!a) setTimeout(()=>$('ans').focus(), 0);
+  updateScore();
+}
+function esc(s){ return (s||'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+
+function showFeedback(it, a){
+  const fb = $('fb');
+  if(a.res === 'na'){
+    fb.className = 'fb show na';
+    $('fbHead').textContent = 'Soluzione da verificare';
+    $('fbSol').textContent = 'Il PDF non indica in modo univoco che cosa mostri questa immagine.';
+  }else if(a.res === 'ok'){
+    fb.className = 'fb show ok';
+    $('fbHead').textContent = 'Giusto';
+    $('fbSol').textContent = it.sol;
+  }else{
+    fb.className = 'fb show ko';
+    $('fbHead').textContent = a.text.trim() ? 'Sbagliato — la soluzione è:' : 'La soluzione è:';
+    $('fbSol').textContent = it.sol;
+  }
+  const alts = (it.alts||[]).filter(Boolean);
+  $('fbAlts').textContent = (a.res==='na' ? '' :
+      'Preparato: ' + it.prep + (alts.length ? ' · accettati anche: ' + alts.join('; ') : ''));
+  $('fbQuote').textContent = '«' + it.testo + '»  (pag. ' + it.page + ')';
+  $('fbNote').textContent = it.note || '';
+  $('fbDet').open = (a.res !== 'ok');
+}
+function updateScore(){
+  let ok=0, ko=0;
+  for(const k in answers){ if(answers[k].res==='ok') ok++; else if(answers[k].res==='ko') ko++; }
+  $('nok').textContent = ok; $('nko').textContent = ko;
+  $('perc').textContent = (ok+ko) ? Math.round(100*ok/(ok+ko)) + '%' : '–';
+  $('btnWrong').disabled = ko===0;
+}
+
+/* ---------- azioni ---------- */
+function submit(skipped){
+  const it = deck[idx];
+  if(answers[it.id]) { next(); return; }
+  const text = $('ans').value;
+  let res;
+  if(isUnsure(it)) res = 'na';
+  else if(skipped || !norm(text)) res = 'ko';
+  else res = isCorrect(text, it) ? 'ok' : 'ko';
+  answers[it.id] = {text, res};
+  $('ans').disabled = true; $('btnOk').disabled = true; $('btnSkip').disabled = true;
+  showFeedback(it, answers[it.id]);
+  updateScore(); save();
+  $('btnNext').focus();
+}
+function next(){
+  if(idx < deck.length-1){ idx++; render(); }
+  else finish();
+}
+function finish(){
+  let ok=0, ko=0, na=0;
+  const rows=[];
+  for(const it of deck){
+    const a = answers[it.id];
+    if(!a) continue;
+    if(a.res==='ok') ok++; else if(a.res==='ko'){ ko++;
+      rows.push(`<tr><td>${esc(it.id)}<br><span class="tag">pag. ${it.page}</span></td>
+        <td><b>${esc(it.sol)}</b><br><span class="alts">tua risposta: ${esc(a.text)||'—'}</span></td></tr>`);
+    } else na++;
+  }
+  $('quiz').hidden = true; $('end').hidden = false;
+  $('endTxt').textContent = `${ok} giuste, ${ko} sbagliate` +
+      (na ? `, ${na} non valutate (soluzione da verificare)` : '') +
+      (ok+ko ? ` — ${Math.round(100*ok/(ok+ko))}%` : '');
+  $('revTable').innerHTML = rows.join('');
+  $('btnWrong2').disabled = ko===0;
+}
+function onlyWrong(){
+  const w = deck.filter(it => answers[it.id] && answers[it.id].res==='ko');
+  if(!w.length) return;
+  deck = shuffle(w); idx = 0; answers = {};
+  render(); save();
+}
+
+/* ---------- persistenza (best effort) ---------- */
+function save(){
+  try{ localStorage.setItem('tessuti', JSON.stringify(
+    {ids:deck.map(d=>d.id), idx, answers})); }catch(e){}
+}
+function load(){
+  try{
+    const s = JSON.parse(localStorage.getItem('tessuti')||'null');
+    if(!s || !s.ids || !s.ids.length) return false;
+    const by = {}; DATI.forEach(d=>by[d.id]=d);
+    const d = s.ids.map(i=>by[i]).filter(Boolean);
+    if(d.length !== s.ids.length) return false;
+    deck = d; idx = s.idx||0; answers = s.answers||{};
+    return true;
+  }catch(e){ return false; }
+}
+
+/* ---------- eventi ---------- */
+$('form').addEventListener('submit', e=>{ e.preventDefault(); submit(false); });
+$('btnSkip').onclick = ()=> submit(true);
+$('btnNext').onclick = ()=> next();   /* avanzare senza rispondere non conta come errore */
+$('btnPrev').onclick = ()=> { if(idx>0){ idx--; render(); } };
+$('btnShuffle').onclick = ()=> { deck = shuffle(deck); idx=0; render(); save(); };
+$('btnReset').onclick = ()=> { answers = {}; idx=0; render(); save(); };
+$('btnWrong').onclick = onlyWrong;
+$('btnWrong2').onclick = onlyWrong;
+$('btnAgain').onclick = build;
+$('btnApply').onclick = ()=> { $('opts').hidden = true; build(); };
+$('btnOpts').onclick = ()=> { $('opts').hidden = !$('opts').hidden; };
+$('img').onclick = ()=> { $('lbImg').src = $('img').src; $('lb').classList.add('show'); };
+$('lb').onclick = ()=> $('lb').classList.remove('show');
+document.addEventListener('keydown', e=>{
+  if(e.key==='Escape') $('lb').classList.remove('show');
+  if(e.target.tagName==='INPUT') return;
+  if(e.key==='ArrowRight') $('btnNext').click();
+  if(e.key==='ArrowLeft')  $('btnPrev').click();
+});
+
+/* ---------- avvio ---------- */
+(function(){
+  const counts = {tessuto:0,struttura:0,organo:0,altro:0};
+  DATI.forEach(d=>counts[catOf(d)]++);
+  document.querySelectorAll('.f').forEach(c=>{
+    const l = c.parentElement;
+    l.lastChild.textContent = l.lastChild.textContent.replace(/\(\d+\)/, '('+counts[c.dataset.f]+')');
+  });
+  const u = DATI.filter(isUnsure).length, lb = DATI.filter(hasLabel).length;
+  $('fUnsure').parentElement.lastChild.textContent =
+    ` includi le immagini senza soluzione certa (${u})`;
+  $('fLabel').parentElement.lastChild.textContent =
+    ` includi le immagini con l'etichetta già stampata sopra (${lb})`;
+
+  if(load()) render(); else build();
+})();
+</script>
+</html>
